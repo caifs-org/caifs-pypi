@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      caifs_version:
+        description: "caifs version tag (e.g. v0.6.2). Leave empty for latest."
+        required: false
+      caifs_common_version:
+        description: "caifs-common version tag (e.g. v0.5.0). Leave empty for latest."
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Vendor caifs and caifs-common
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./scripts/vendor.sh \
+            "${{ github.event.inputs.caifs_version }}" \
+            "${{ github.event.inputs.caifs_common_version }}"
+
+      - name: Smoke test
+        run: |
+          uv run caifs --version
+          uv run caifs status
+
+      - name: Build wheel and sdist
+        run: uv build
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          CAIFS_VER=$(uv run caifs --version)
+          PKG_VER=$(uv run python -c "import caifs; print(caifs.__version__)")
+          TAG="v${PKG_VER}+caifs${CAIFS_VER}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "pkg_ver=$PKG_VER" >> "$GITHUB_OUTPUT"
+          echo "caifs_ver=$CAIFS_VER" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          body: |
+            Bundles:
+            - caifs ${{ steps.tag.outputs.caifs_ver }}
+            - caifs-common (see vendored contents)
+
+            Install:
+            ```
+            uv tool install caifs --from "https://github.com/caifs-org/caifs-pypi/releases/download/${{ steps.tag.outputs.tag }}/caifs-${{ steps.tag.outputs.pkg_ver }}-py3-none-any.whl"
+            ```
+          files: dist/*
+          make_latest: true

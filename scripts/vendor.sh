@@ -10,6 +10,10 @@ VENDOR_DIR="$REPO_ROOT/src/caifs/_vendor"
 CAIFS_VERSION="${1:-latest}"
 COMMON_VERSION="${2:-latest}"
 
+# Treat empty string the same as unset (workflow_dispatch passes "" for empty inputs)
+[ -z "$CAIFS_VERSION" ] && CAIFS_VERSION="latest"
+[ -z "$COMMON_VERSION" ] && COMMON_VERSION="latest"
+
 fetch_tag() {
     local repo="$1" requested="$2"
     if [ "$requested" = "latest" ]; then
