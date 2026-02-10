@@ -1,0 +1,32 @@
+[project]
+name = "caifs"
+version = "0.1.0"
+description = "Python wrapper for the CAIFS cross-platform installer framework"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+
+[project.scripts]
+caifs = "caifs.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+artifacts = ["src/caifs/_vendor/**"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/caifs"]
+
+[dependency-groups]
+dev = ["pre-commit", "pytest", "ruff", "ty"]
+
+[tool.ruff]
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

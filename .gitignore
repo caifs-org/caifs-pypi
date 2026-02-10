@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+
+# Vendored files (populated by scripts/vendor.sh)
+src/caifs/_vendor/*
+!src/caifs/_vendor/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
