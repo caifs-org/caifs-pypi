@@ -50,7 +50,9 @@ jobs:
       - name: Determine release tag
         id: tag
         run: |
-          CAIFS_VER=$(uv run caifs --version)
+          # Read version from caifslib.sh directly (caifs --version is broken on Ubuntu
+          # because sourcing /etc/os-release overwrites the VERSION variable)
+          CAIFS_VER=$(grep '^VERSION=' src/caifs/_vendor/lib/caifslib.sh | cut -d= -f2)
           PKG_VER=$(uv run python -c "import caifs; print(caifs.__version__)")
           TAG="v${PKG_VER}+caifs${CAIFS_VER}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
@@ -71,5 +73,7 @@ jobs:
             ```
             uv tool install caifs --from "https://github.com/caifs-org/caifs-pypi/releases/download/${{ steps.tag.outputs.tag }}/caifs-${{ steps.tag.outputs.pkg_ver }}-py3-none-any.whl"
             ```
-          files: dist/*
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
           make_latest: true
